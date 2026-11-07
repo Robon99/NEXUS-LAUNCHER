@@ -1,0 +1,432 @@
+import { ScrollView } from "std-widgets.slint";
+
+export struct CurseForgeCard {
+    id: string,
+    name: string,
+    summary: string,
+    downloads: string,
+}
+
+export struct InstanceCard {
+    id: string,
+    name: string,
+    mc_version: string,
+    loader: string,
+    nickname: string,
+    installed: bool,
+}
+
+component ActionButton inherits Rectangle {
+    in property <string> label;
+    in property <color> accent: #7857e8;
+    in property <color> label-color: #ffffff;
+    callback clicked();
+    height: 42px;
+    background: accent;
+    border-radius: 10px;
+    Text {
+        text: root.label;
+        color: root.label-color;
+        font-size: 14px;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        clicked => { root.clicked(); }
+    }
+}
+
+component Field inherits Rectangle {
+    in-out property <string> value;
+    in property <string> hint;
+    in property <string> label;
+    height: 70px;
+    background: transparent;
+    VerticalLayout {
+        spacing: 6px;
+        Text {
+            text: root.label;
+            color: #9ca7ba;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        Rectangle {
+            height: 40px;
+            background: #171e2b;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: #293346;
+            TextInput {
+                x: 10px;
+                y: 1px;
+                width: parent.width - 20px;
+                height: parent.height - 2px;
+                text <=> root.value;
+                color: #edf1f8;
+                font-size: 13px;
+                vertical-alignment: center;
+                selection-background-color: #6247c7;
+            }
+            if root.value == "" : Text {
+                x: 11px;
+                y: 0px;
+                height: parent.height;
+                text: root.hint;
+                color: #69768c;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    title: "NEXUS Launcher";
+    preferred-width: 1180px;
+    preferred-height: 760px;
+    min-width: 980px;
+    min-height: 650px;
+    background: #0c111a;
+
+    in-out property <[InstanceCard]> instances;
+    in-out property <[CurseForgeCard]> curseforge_results;
+    in-out property <string> curseforge_query: "";
+    in-out property <string> selected_id: "";
+    in-out property <string> status_text: "Готов к работе";
+    in-out property <string> profile_name: "Моя сборка";
+    in-out property <string> version_text: "latest-release";
+    in-out property <string> nickname_text: "Player";
+    in-out property <string> java_path: "auto";
+    in-out property <int> memory_gb: 4;
+    in-out property <string> account_text: "Офлайн-профиль";
+
+    callback create_instance();
+    callback select_instance(string);
+    callback delete_instance(string);
+    callback launch_instance(string);
+    callback import_modpack();
+    callback search_curseforge(string);
+    callback install_curseforge(string);
+    callback add_offline_account(string);
+    callback microsoft_login();
+    callback switch_account();
+    callback save_settings();
+    callback open_instances_folder();
+
+    Rectangle {
+        background: #0c111a;
+        width: parent.width;
+        height: parent.height;
+        HorizontalLayout {
+            spacing: 0px;
+            Rectangle {
+                width: 218px;
+                background: #101724;
+                VerticalLayout {
+                    padding: 18px;
+                    spacing: 18px;
+                    HorizontalLayout {
+                        alignment: start;
+                        spacing: 10px;
+                        Rectangle {
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: #7857e8;
+                            Text {
+                                text: "N";
+                                color: #ffffff;
+                                font-size: 23px;
+                                font-weight: 900;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+                        VerticalLayout {
+                            spacing: 1px;
+                            Text { text: "NEXUS"; color: #f4f5fb; font-size: 18px; font-weight: 900; }
+                            Text { text: "MINECRAFT LAUNCHER"; color: #78859b; font-size: 8px; font-weight: 700; }
+                        }
+                    }
+                    Rectangle { height: 1px; background: #222d3e; }
+                    Text { text: "РАБОЧЕЕ ПРОСТРАНСТВО"; color: #65738b; font-size: 9px; font-weight: 800; }
+                    Rectangle {
+                        height: 40px;
+                        border-radius: 9px;
+                        background: #24203d;
+                        HorizontalLayout {
+                            padding-left: 11px;
+                            spacing: 9px;
+                            Text { text: "▦"; color: #aa98ff; font-size: 19px; vertical-alignment: center; }
+                            Text { text: "Библиотека"; color: #f1edff; font-size: 13px; font-weight: 700; vertical-alignment: center; }
+                        }
+                    }
+                    Rectangle {
+                        height: 40px;
+                        border-radius: 9px;
+                        background: transparent;
+                        HorizontalLayout {
+                            padding-left: 11px;
+                            spacing: 9px;
+                            Text { text: "◈"; color: #8290a7; font-size: 18px; vertical-alignment: center; }
+                            Text { text: "Импорт сборки (.mrpack / .zip)"; color: #aab4c5; font-size: 13px; vertical-alignment: center; }
+                            TouchArea { clicked => { root.import_modpack(); } }
+                        }
+                    }
+                    Rectangle { height: 1px; background: #222d3e; }
+                    Text { text: "АККАУНТЫ"; color: #65738b; font-size: 9px; font-weight: 800; }
+                    Rectangle {
+                        background: #171e2b;
+                        border-radius: 9px;
+                        height: 58px;
+                        VerticalLayout {
+                            padding: 10px;
+                            spacing: 4px;
+                            Text { text: root.account_text; color: #e3e8f2; font-size: 12px; font-weight: 700; }
+                            Text { text: "Локальный режим"; color: #7d8aa1; font-size: 10px; }
+                        }
+                    }
+                    ActionButton {
+                        label: "Войти через Microsoft";
+                        accent: #26354a;
+                        clicked => { root.microsoft_login(); }
+                    }
+                    ActionButton {
+                        label: "Применить офлайн-ник";
+                        accent: #26354a;
+                        clicked => { root.add_offline_account(root.nickname_text); }
+                    }
+                    ActionButton {
+                        label: "Сменить аккаунт";
+                        accent: #26354a;
+                        clicked => { root.switch_account(); }
+                    }
+                    Rectangle { height: 1px; background: #222d3e; }
+                    Text { text: "НАСТРОЙКИ"; color: #65738b; font-size: 9px; font-weight: 800; }
+                    Text { text: "Java и память"; color: #aab4c5; font-size: 12px; }
+                    Field { label: "ПУТЬ К JAVA"; hint: "auto или полный путь к java.exe"; value <=> root.java_path; }
+                    Rectangle {
+                        height: 38px;
+                        background: #171e2b;
+                        border-radius: 8px;
+                        HorizontalLayout {
+                            padding: 7px;
+                            spacing: 8px;
+                            Text { text: "RAM"; color: #aab4c5; font-size: 11px; vertical-alignment: center; }
+                            Text { text: "-"; color: #aab4c5; vertical-alignment: center; }
+                            TouchArea { width: 20px; clicked => { if (root.memory_gb > 2) { root.memory_gb -= 1; } } }
+                            Text { text: "RAM: " + root.memory_gb + " ГБ"; color: #ffffff; font-size: 12px; font-weight: 700; horizontal-alignment: center; vertical-alignment: center; }
+                            TouchArea { width: 20px; clicked => { if (root.memory_gb < 32) { root.memory_gb += 1; } } }
+                            Text { text: "+"; color: #aab4c5; vertical-alignment: center; }
+                        }
+                    }
+                    ActionButton { label: "Сохранить настройки"; accent: #26354a; clicked => { root.save_settings(); } }
+                    Rectangle { height: 1px; background: #222d3e; }
+                    ActionButton { label: "Открыть папку сборок"; accent: #1c2737; clicked => { root.open_instances_folder(); } }
+                    Rectangle { height: 1px; background: #222d3e; }
+                    Text { text: "NEXUS v0.2.0"; color: #58657a; font-size: 10px; }
+                    Text { text: "Rust • Slint • Minecraft Java"; color: #58657a; font-size: 9px; }
+                }
+            }
+            Rectangle { width: 1px; background: #202b3a; }
+            Rectangle {
+                background: #0c111a;
+                HorizontalLayout {
+                    padding: 25px;
+                    spacing: 22px;
+                    VerticalLayout {
+                        width: 58%;
+                        spacing: 16px;
+                        HorizontalLayout {
+                            alignment: space-between;
+                            Text { text: "ТВОЯ БИБЛИОТЕКА"; color: #ffffff; font-size: 23px; font-weight: 800; }
+                            Text { text: "ИНСТАНСОВ: " + root.instances.length; color: #75839a; font-size: 10px; vertical-alignment: center; }
+                        }
+                        Text { text: "Каждая сборка живёт отдельно: свои моды, миры и настройки."; color: #8d9ab0; font-size: 12px; }
+                        Text { text: "CurseForge API: задай NEXUS_CURSEFORGE_API_KEY в Windows, чтобы искать и устанавливать сборки."; color: #738199; font-size: 9px; wrap: word-wrap; }
+                        Rectangle {
+                            height: 43px;
+                            background: #141c29;
+                            border-radius: 9px;
+                            HorizontalLayout {
+                                padding: 5px;
+                                spacing: 7px;
+                                TextInput {
+                                    text <=> root.curseforge_query;
+                                    placeholder-text: "Поиск сборок CurseForge";
+                                    color: #eef2fa;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+                                ActionButton {
+                                    width: 88px;
+                                    height: 32px;
+                                    label: "Найти";
+                                    accent: #654bc2;
+                                    clicked => { root.search_curseforge(root.curseforge_query); }
+                                }
+                            }
+                        }
+                        if root.curseforge_results.length > 0 : ScrollView {
+                            height: 112px;
+                            VerticalLayout {
+                                spacing: 5px;
+                                for pack in root.curseforge_results: Rectangle {
+                                    height: 48px;
+                                    background: #182333;
+                                    border-radius: 7px;
+                                    HorizontalLayout {
+                                        padding: 6px;
+                                        spacing: 7px;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            spacing: 2px;
+                                            Text { text: pack.name; color: #f0f2f8; font-size: 10px; font-weight: 700; }
+                                            Text { text: pack.summary == "" ? pack.downloads + " загрузок · #" + pack.id : pack.summary; color: #8290a7; font-size: 8px; overflow: elide; }
+                                        }
+                                        ActionButton {
+                                            width: 78px;
+                                            height: 30px;
+                                            label: "Импорт";
+                                            accent: #287d62;
+                                            clicked => { root.install_curseforge(pack.id); }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ScrollView {
+                            height: 235px;
+                            VerticalLayout {
+                                spacing: 9px;
+                                for item in root.instances: Rectangle {
+                                    height: 78px;
+                                    background: root.selected_id == item.id ? #24203d : #141c29;
+                                    border-radius: 10px;
+                                    border-width: root.selected_id == item.id ? 1px : 0px;
+                                    border-color: #7857e8;
+                                    HorizontalLayout {
+                                        padding: 11px;
+                                        spacing: 10px;
+                                        Rectangle {
+                                            width: 43px;
+                                            height: 43px;
+                                            border-radius: 9px;
+                                            background: root.selected_id == item.id ? #654bc2 : #25334a;
+                                            Text { text: "▣"; color: #dcd5ff; font-size: 22px; horizontal-alignment: center; vertical-alignment: center; }
+                                        }
+                                        VerticalLayout {
+                                            alignment: center;
+                                            spacing: 4px;
+                                            Text { text: item.name; color: #f1f3f8; font-size: 14px; font-weight: 700; }
+                                            Text { text: item.mc_version + "  •  " + item.loader + "  •  " + item.nickname; color: #8d9ab0; font-size: 10px; }
+                                            Text { text: item.installed ? "УСТАНОВЛЕНО" : "ЕЩЁ НЕ УСТАНОВЛЕНО"; color: item.installed ? #6bd3a0 : #d5aa60; font-size: 8px; font-weight: 800; }
+                                        }
+                                        Rectangle { width: 1px; background: #2d3749; }
+                                        ActionButton {
+                                            width: 65px;
+                                            height: 32px;
+                                            label: "Выбрать";
+                                            accent: #303b51;
+                                            clicked => { root.select_instance(item.id); }
+                                        }
+                                        ActionButton {
+                                            width: 34px;
+                                            height: 32px;
+                                            label: "×";
+                                            accent: #482b39;
+                                            clicked => { root.delete_instance(item.id); }
+                                        }
+                                    }
+                                    TouchArea {
+                                        x: 0px;
+                                        y: 0px;
+                                        width: 52px;
+                                        height: 78px;
+                                        clicked => { root.select_instance(item.id); }
+                                    }
+                                }
+                            }
+                        }
+                        Rectangle {
+                            background: #141c29;
+                            border-radius: 12px;
+                            VerticalLayout {
+                                padding: 15px;
+                                spacing: 10px;
+                                Text { text: "СОЗДАТЬ НОВУЮ СБОРКУ"; color: #dfe5ef; font-size: 12px; font-weight: 800; }
+                                HorizontalLayout {
+                                    spacing: 9px;
+                                    Field { width: 44%; label: "НАЗВАНИЕ"; hint: "Например, Vanilla"; value <=> root.profile_name; }
+                                    Field { width: 33%; label: "ВЕРСИЯ MINECRAFT"; hint: "latest-release"; value <=> root.version_text; }
+                                    Field { width: 23%; label: "НИКНЕЙМ"; hint: "Player"; value <=> root.nickname_text; }
+                                }
+                                ActionButton { label: "+  Создать профиль"; accent: #7857e8; clicked => { root.create_instance(); } }
+                            }
+                        }
+                    }
+                    Rectangle { width: 1px; background: #202b3a; }
+                    VerticalLayout {
+                        width: 42%;
+                        spacing: 15px;
+                        Text { text: "ПАНЕЛЬ ЗАПУСКА"; color: #ffffff; font-size: 18px; font-weight: 800; }
+                        Rectangle {
+                            background: #171e2b;
+                            border-radius: 14px;
+                            VerticalLayout {
+                                padding: 17px;
+                                spacing: 10px;
+                                Rectangle {
+                                    height: 150px;
+                                    border-radius: 10px;
+                                    background: #252747;
+                                    clip: true;
+                                    Rectangle { x: 0px; y: 88px; width: parent.width; height: 90px; background: #253e42; }
+                                    Rectangle { x: 0px; y: 112px; width: parent.width; height: 50px; background: #1d3336; }
+                                    Text { text: "N"; color: #ffffff; font-size: 64px; font-weight: 900; horizontal-alignment: center; vertical-alignment: center; }
+                                    Text { text: "NEXUS INSTANCE"; color: #d2d6ef; font-size: 9px; horizontal-alignment: center; vertical-alignment: bottom; }
+                                }
+                                Text { text: "ВЫБРАННЫЙ ПРОФИЛЬ"; color: #78869d; font-size: 9px; font-weight: 800; }
+                                Text {
+                                    text: root.selected_id == "" ? "Профиль не выбран" : (root.instances.length > 0 ? "Готов к запуску" : "Создай свою первую сборку");
+                                    color: #f2f4fa;
+                                    font-size: 19px;
+                                    font-weight: 800;
+                                }
+                                Text { text: "Никнейм для офлайн-режима задаётся в поле при создании профиля."; color: #929fb3; font-size: 11px; wrap: word-wrap; }
+                                ActionButton {
+                                    height: 48px;
+                                    label: "▶   УСТАНОВИТЬ / ИГРАТЬ";
+                                    accent: #2b9b70;
+                                    clicked => { if (root.selected_id != "") { root.launch_instance(root.selected_id); } }
+                                }
+                                Text { text: "При первом запуске лаунчер скачает официальные файлы Minecraft."; color: #77859a; font-size: 10px; wrap: word-wrap; }
+                            }
+                        }
+                        Rectangle {
+                            background: #141c29;
+                            border-radius: 12px;
+                            VerticalLayout {
+                                padding: 14px;
+                                spacing: 7px;
+                                Text { text: "ЖУРНАЛ ЛАУНЧЕРА"; color: #dfe5ef; font-size: 11px; font-weight: 800; }
+                                Text { text: root.status_text; color: #aab7ca; font-size: 11px; wrap: word-wrap; }
+                            }
+                        }
+                        Rectangle {
+                            background: #171e2b;
+                            border-radius: 12px;
+                            VerticalLayout {
+                                padding: 13px;
+                                spacing: 5px;
+                                Text { text: "ВАЖНО"; color: #e5c27c; font-size: 10px; font-weight: 800; }
+                                Text { text: "Офлайн-режим предназначен для одиночной игры и серверов без online-mode. Для лицензированных серверов используй Microsoft-вход."; color: #aab4c5; font-size: 10px; wrap: word-wrap; }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
